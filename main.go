@@ -12,7 +12,9 @@ type Document struct{
 
 func search(index map[string][]string, query string) []string{
 	words := strings.Fields(query)
-	fmt.Println(words)
+	for _, word := range words {
+		fmt.Println(word, "->", index[word])
+	}
 	return nil
 }
 
