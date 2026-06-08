@@ -16,7 +16,7 @@ func intersect(a []string, b []string) [] string{
 	for _, idA := range a{
 		for _, idB := range b{
 			if idA == idB {
-				result.append(result, idA)
+				result = append(result, idA)
 			}
 		}
 	}
