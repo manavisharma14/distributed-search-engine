@@ -43,7 +43,7 @@ func rankResults(index map[string][]string, query string) []SearchResult {
 			}
 		}
 	}
-	return results;
+	return results
 }
 
 func union (a []string, b []string) [] string {
@@ -138,14 +138,23 @@ func main(){
 
 	fmt.Println(rankedResults)
 
-	orResults := searchOR(index, "go")
-	// andResults := searchAND(index, "go")
-
-	for _, id := range orResults{
-		for _, doc := range docs{
-			if doc.ID == id {
-				fmt.Println(doc.Text)
+	for _, result := range rankedResults {
+		for _, doc := range docs {
+			if doc.ID == result.ID {
+				fmt.Println(doc.Text, "Score:", result.Score)
 			}
 		}
 	}
+
+	// orResults := searchOR(index, "go")
+
+	// andResults := searchAND(index, "go")
+
+	// for _, id := range orResults{
+	// 	for _, doc := range docs{
+	// 		if doc.ID == id {
+	// 			fmt.Println(doc.Text)
+	// 		}
+	// 	}
+	// }
 }
