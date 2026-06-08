@@ -10,27 +10,18 @@ type Document struct{
 	Text	string
 }
 
-func search(index map[string][]string, query string) []string{
+func search(index map[string][]string, query string) [] string{
 	words := strings.Fields(query)
-	// for _, word := range words {
-	// 	fmt.Println(word, "->", index[word])
-	// }
-	// return nil
 
-	result := []string{}
-
-	first := index[words[0]]
-	second := index[words[1]]
-	
-	for _, id1 := range first{
-		for _, id2 := range second {
-			if id1 == id2 {
-				result = append(result, id1)
-			}
-		}
+	if len(words) == 0 {
+		return []string{}
 	}
 
-	return result
+	fmt.Println(words)
+	fmt.Println(words[0])
+	fmt.Println(index[words[0]])
+
+	return index[words[0]]
 }
 
 func main(){
@@ -50,27 +41,9 @@ func main(){
 		}
 	}
 
-	results := search(index, "go fast")
+	results := search(index, "go")
 	fmt.Println(results)
 
-	for _, id := range results{
-		for _, doc := range docs{
-			if doc.ID == id{
-				fmt.Println(doc.Text)
-			}
-		}
-
-	}
-
-	// for word, docIDs := range index {
-	// 	fmt.Printf("%s -> %v\n", word, docIDs)
-	// }
 
 
-
-	// fmt.Println("Documents: ")
-
-	// for _, doc := range docs{
-	// 	fmt.Printf("ID: %s | Text: %s\n", doc.ID, doc.Text)
-	// }
 }
