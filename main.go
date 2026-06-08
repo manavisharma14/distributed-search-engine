@@ -10,6 +10,20 @@ type Document struct{
 	Text	string
 }
 
+func intersect(a []string, b []string) [] string{
+	result := []string{}
+
+	for _, idA := range a{
+		for _, idB := range b{
+			if idA == idB {
+				result.append(result, idA)
+			}
+		}
+	}
+
+	return result
+}
+
 func search(index map[string][]string, query string) [] string{
 	words := strings.Fields(query)
 
