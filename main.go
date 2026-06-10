@@ -105,7 +105,23 @@ func loadDocuments(filename string) []Document{
 
 func main(){
 
-	docs = loadDocuments("documents.txt")
+	files, err := os.ReadDir("documents")
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	for _, file := range files {
+		fmt.Println("documents/" + file.Name())
+
+	}
+
+	docs = []Document{}
+
+	for _, file := range files {
+		docs = append(docs, loadDocuments("documents/" + file.Name())...)
+	}
 
 	for _, doc := range docs{
 		words := strings.Fields(doc.Text)
