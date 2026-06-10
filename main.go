@@ -10,6 +10,7 @@ import (
 		"net/http"
 		"strings"
 		"strconv"
+		"sync"
 	)
 
 var index = make(map[string][]string)
@@ -110,8 +111,10 @@ func main(){
 	docs = []Document{}
 
 	for _, file := range files {
-		docs = append(docs, loadDocuments("documents/" + file.Name())...)
+		go loadDocuments("documents/" + file.Name())
 	}
+
+	fmt.Println("building index now")
 
 	id := 1
 	for i := range docs {
@@ -130,6 +133,10 @@ func main(){
 	http.HandleFunc("/", helloHandle)
 	http.HandleFunc("/search", apiSearchHandle)
 	
+	
+
+	go fmt.Println("hello from goroutine!")
+
 	fmt.Println("server running on :8080")
 
 	http.ListenAndServe(":8080", nil)
