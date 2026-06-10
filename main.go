@@ -107,12 +107,20 @@ func main(){
 		return
 	}
 
+	var wg sync.WaitGroup
+
+	docChannel := make(chan []Document)
 
 	docs = []Document{}
 
-	for _, file := range files {
-		go loadDocuments("documents/" + file.Name())
-	}
+	wg.Add(1)
+
+	go func() {
+		defer wg.Done()
+
+		fmt.Println("worker running")
+	} ()
+	wg.Wait()
 
 	fmt.Println("building index now")
 
