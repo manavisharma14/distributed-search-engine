@@ -1,6 +1,8 @@
 package main
 
-import ("fmt"
+import (
+		"encoding/json"
+		"fmt"
 		"html/template"
 		"net/http"
 		"strings"
@@ -17,6 +19,26 @@ type DisplayResult struct {
 type PageData struct {
 	Query 		string
 	Results 	[]DisplayResult
+}
+
+func apiSearchHandle(w http.ResponseWriter, r *http.Request){
+	query := r.URL.Query().Get("q")
+	results := rankResults(index, query)
+
+	displayResults := []DisplayResult{}
+
+	for _, result := range results {
+		for _, doc := range docs {
+			if doc.ID == result.ID {
+				displayResults = append(displayResults, DisplayResult{
+					Text: doc.Text, 
+					Score: result.Score,
+				})
+			}
+		}
+	}
+
+	json.NewEncoder(w).Encode(displayResults)
 }
 
 func helloHandle(w http.ResponseWriter, r *http.Request){
@@ -67,6 +89,7 @@ func main(){
 	}
 
 	http.HandleFunc("/", helloHandle)
+	http.HandleFunc("/search", apiSearchHandle)
 	
 	fmt.Println("server running on :8080")
 
