@@ -1,6 +1,8 @@
 package main
 
 import (
+		"bufio"
+		"os"
 		"encoding/json"
 		"fmt"
 		"html/template"
