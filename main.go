@@ -18,28 +18,34 @@ type DisplayResult struct {
 	Text		string
 	Score		int	
 }
-
+ 
 type PageData struct {
 	Query 		string
 	Results 	[]DisplayResult
 }
 
-func apiSearchHandle(w http.ResponseWriter, r *http.Request){
-	query := r.URL.Query().Get("q")
+func buildDisplayResults(query string) [] DisplayResult{
 	results := rankResults(index, query)
-
 	displayResults := []DisplayResult{}
 
 	for _, result := range results {
 		for _, doc := range docs {
 			if doc.ID == result.ID {
 				displayResults = append(displayResults, DisplayResult{
-					Text: doc.Text, 
+					Text: doc.Text,
 					Score: result.Score,
 				})
 			}
 		}
 	}
+	return displayResults
+}
+
+func apiSearchHandle(w http.ResponseWriter, r *http.Request){
+	query := r.URL.Query().Get("q")
+
+
+	displayResults := buildDisplayResults(query)
 
 	json.NewEncoder(w).Encode(displayResults)
 }
@@ -53,20 +59,8 @@ func helloHandle(w http.ResponseWriter, r *http.Request){
 	}
 	
 	query := r.URL.Query().Get("q")
-	results := rankResults(index, query)
-	displayResults := []DisplayResult{}
-
-	for _, result := range results{
-		for _, doc := range docs{
-			if doc.ID == result.ID {
-				displayResults = append(displayResults, DisplayResult{
-					Text: doc.Text,
-					Score: result.Score,
-				})
-			}
-		}
-	}
-
+	
+	displayResults := buildDisplayResults(query)
 	data := PageData{
 		Query: query,
 		Results: displayResults,
@@ -87,17 +81,16 @@ func loadDocuments(filename string) []Document{
 
 	scanner := bufio.NewScanner(file)
 
-	id := 1
+
 	for scanner.Scan() {
 		text := scanner.Text()
-		fmt.Println(text)
 
 		doc := Document{
-		ID: strconv.Itoa(id),
+
 		Text: text,
 	}
 	documents = append(documents, doc)
-	id++
+
 	}
 
 	return documents
@@ -112,15 +105,17 @@ func main(){
 		return
 	}
 
-	for _, file := range files {
-		fmt.Println("documents/" + file.Name())
-
-	}
 
 	docs = []Document{}
 
 	for _, file := range files {
 		docs = append(docs, loadDocuments("documents/" + file.Name())...)
+	}
+
+	id := 1
+	for i := range docs {
+		docs[i].ID = strconv.Itoa(id)
+		id++
 	}
 
 	for _, doc := range docs{
