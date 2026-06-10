@@ -8,6 +8,7 @@ import (
 		"html/template"
 		"net/http"
 		"strings"
+		"strconv"
 	)
 
 var index = make(map[string][]string)
@@ -72,6 +73,26 @@ func helloHandle(w http.ResponseWriter, r *http.Request){
 	}
 	
 	tmpl.Execute(w, data)
+}
+
+func loadDocuments(filename string) []Document{
+	file, err := os.Open(filename)
+
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+
+	documents := []Document{}
+
+	scanner := bufio.NewScanner(file)
+
+	id := 1
+	for scanner.Scan() {
+		text := scanner.Text()
+		fmt.Println(text)
+	}
+
 }
 
 func main(){
