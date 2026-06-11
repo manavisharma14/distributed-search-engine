@@ -15,6 +15,8 @@ import (
 var index = make(map[string][]string)
 var docs []Document
 
+var docMap = make(map[string]Document)
+
 type DisplayResult struct {
 	Text		string
 	Score		int	
@@ -30,14 +32,12 @@ func buildDisplayResults(query string) [] DisplayResult{
 	displayResults := []DisplayResult{}
 
 	for _, result := range results {
-		for _, doc := range docs {
-			if doc.ID == result.ID {
-				displayResults = append(displayResults, DisplayResult{
-					Text: doc.Text,
-					Score: result.Score,
-				})
-			}
-		}
+		doc := docMap[result.ID]
+
+		displayResults = append(displayResults, DisplayResult{
+			Text: doc.Text,
+			Score: result.Score,
+		})
 	}
 	return displayResults
 }
@@ -123,6 +123,7 @@ func main(){
 	id := 1
 	for i := range docs {
 		docs[i].ID = strconv.Itoa(id)
+		docMap[docs[i].ID] = docs[i]
 		id++
 	}
 
@@ -137,8 +138,6 @@ func main(){
 	http.HandleFunc("/", helloHandle)
 	http.HandleFunc("/search", apiSearchHandle)
 	
-	
-
 	fmt.Println("server running on :8080")
 
 	http.ListenAndServe(":8080", nil)
