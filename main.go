@@ -33,6 +33,15 @@ type PageData struct {
 	Results 	[]DisplayResult
 }
 
+func searchAllShards(query string) []SearchResult{
+	allResults := []SearchResult{}
+
+	for _, shard := range shards {
+		shardResults := rankResult(shard.Index, query)
+		allResults := appen(allResults, shardResult...)
+	}
+}
+
 func buildDisplayResults(query string) [] DisplayResult{
 	results := rankResults(index, query)
 	displayResults := []DisplayResult{}
