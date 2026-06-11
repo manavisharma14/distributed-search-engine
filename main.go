@@ -14,8 +14,14 @@ import (
 
 var index = make(map[string][]string)
 var docs []Document
+var shards []Shard
 
 var docMap = make(map[string]Document)
+
+type Shard struct {
+	Docs	[]Document
+	Index	map[string][]string
+}
 
 type DisplayResult struct {
 	Text		string
@@ -126,6 +132,34 @@ func main(){
 		docMap[docs[i].ID] = docs[i]
 		id++
 	}
+	
+	shards = []Shard{
+		{
+			Docs: []Document{},
+			Index: make(map[string][]string),
+		},
+		{
+			Docs: []Document{},
+			Index: make(map[string][]string),
+		},
+	}
+
+	for i, doc := range docs {
+		shardId := i%len(shards)
+
+		shards[shardId].Docs = append(shards[shardId].Docs, doc)
+	}
+
+	for i, s := range shards {
+		fmt.Println(
+			"Shard",
+			i,
+			"documenrs:",
+			len(s.Docs),
+		)
+	}
+
+	
 
 	for _, doc := range docs{
 		words := strings.Fields(doc.Text)
