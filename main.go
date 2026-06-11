@@ -34,12 +34,27 @@ type PageData struct {
 }
 
 func searchAllShards(query string) []SearchResult{
+	var wg sync.WaitGroup
+
+	resultChannel := make(chan []SearchResult)
+
+	for _, shard := range shards{
+		wg.Add(1)
+
+		go func(s Shard){
+			defer wg.Done()
+
+			shardResults := rankResults(s.Index, query)
+			resultChannel <- shardResults
+		}(shard)
+	}
 	allResults := []SearchResult{}
 
-	for _, shard := range shards {
-		shardResults := rankResults(shard.Index, query)
+	for range shards {
+		shardResults := <-resultChannel
 		allResults = append(allResults, shardResults...)
 	}
+	wg.Wait()
 	return allResults
 }
 
