@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"strings"
 )
 
 type Document struct{
@@ -15,9 +16,26 @@ type SearchResult struct{
 	Score	int
 }
 
+var index = map[string][]string{
+	"grpc": 		{"1"},
+	"distributed":	{"1"},
+	"golang": 		{"2"},
+	"concurrency": 	{"2"},
+}
+
 func searchHandler(w http.ResponseWriter, r *http.Request){
+	scores := make(map[string]int)
 	query := r.URL.Query().Get("q")
-	fmt.Fprintf(w, "shard received query: %s", query)
+	words := strings.Fields(query)
+
+	for _, word := range words{
+		ids := index[word]
+		for _, id := range ids {
+			score[id]++
+		}
+	}
+
+	fmt.Fprintf(w, "found docs")
 }
 
 func main(){
