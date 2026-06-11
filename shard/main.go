@@ -31,7 +31,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request){
 	for _, word := range words{
 		ids := index[word]
 		for _, id := range ids {
-			score[id]++
+			scores[id]++
 		}
 	}
 
