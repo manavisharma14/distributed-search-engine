@@ -11,40 +11,43 @@ type SearchResult struct {
 	Score int
 }
 
-func main(){
-
+func searchAllShards(query string) []SearchResult{
 	shards := []string{
-		"http://localhost:5001/search?q=grpc",
-		"http://localhost:5002/search?q=redis",
+		"http://localhost:5001",
+		"http://localhost:5002",
 	}
 
 	resultChannel := make(chan []SearchResult)
-	
-	for _, shardURL := range shards {
 
-		go func (url string){
+	for _, shard := range shards{
+		go func(url string){
+			searchUrl := url + "/search?q=" + query
+			resp, err := http.Get(searchUrl)
 
-			resp, err := http.Get(url)
-
-			if err != nil {
+			if err != nil{
 				fmt.Println(err)
 				return
 			}
 
 			var results []SearchResult
 			json.NewDecoder(resp.Body).Decode(&results)
-
+			
 			resultChannel <- results
-
-		} (shardURL)	
+		}(shard)	
 	}
 
 	allResults := []SearchResult{}
+		
+		for range shards {
+			shardResults := <- resultChannel
+			allResults = append(allResults, shardResults...)
+		}
+	return allResults
+}
 
-	for range shards {
-		shardResults := <- resultChannel
-		allResults = append(allResults, shardResults...)
-	}
-	fmt.Println(allResults)
+func main(){
+
+	results := searchAllShards("grpc")
+	fmt.Println(results)
 	
 }
