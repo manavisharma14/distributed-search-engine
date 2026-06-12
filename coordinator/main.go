@@ -1,10 +1,15 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 )
+
+type SearchResult struct {
+	ID    string
+	Score int
+}
 
 func main(){
 	resp, err := http.Get(
@@ -16,6 +21,7 @@ func main(){
 		return
 	}
 
-	body, _ := io.ReadAll(resp.Body)
-	fmt.Println(string(body))
+	var results []SearchResult
+	json.NewDecoder(resp.Body).Decode(&results)
+	fmt.Println(results)
 }
