@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sort"
+	"time"
 )
 
 type SearchResult struct {
@@ -30,7 +32,10 @@ func searchAllShards(query string) []SearchResult{
 	for _, shard := range shards{
 		go func(url string){
 			searchUrl := url + "/search?q=" + query
-			resp, err := http.Get(searchUrl)
+			client := http.Client{
+				Timeout: 2*time.Second,
+			}
+			resp, err := client.Get(searchUrl)
 
 			if err != nil{
 				fmt.Println(err)
@@ -54,14 +59,20 @@ func searchAllShards(query string) []SearchResult{
 	allResults := []SearchResult{}
 			
 	for range shards {
-	shardResults := <- resultChannel
-	allResults = append(allResults, shardResults...)
+		shardResults := <- resultChannel
+		allResults = append(allResults, shardResults...)
 	}
+	sort.Slice(allResults, func(i,j int) bool{
+		return allResults[i].Score > allResults[j].Score
+	})
 	return allResults
 }
 
 func main(){
 	
 	http.HandleFunc("/search", searchHandler)
-	http.ListenAndServe(":8080", nil)
+	fmt.Println("coordinator running on :8080")
+	if err := http.ListenAndServe(":8080", nil); err != nil{
+		fmt.Println(err)
+	}
 }

@@ -4,14 +4,14 @@ import (
 	"strings"
 )
 
-type Document struct{
-	ID		string
-	Text	string
+type Document struct {
+	ID   string
+	Text string
 }
 
-type SearchResult struct{
-	ID		string
-	Score	int
+type SearchResult struct {
+	ID    string
+	Score int
 }
 
 func rankResults(index map[string][]string, query string) []SearchResult {
@@ -19,8 +19,8 @@ func rankResults(index map[string][]string, query string) []SearchResult {
 
 	scores := make(map[string]int)
 
-	for _, word := range words{
-		for _, id := range index[word]{
+	for _, word := range words {
+		for _, id := range index[word] {
 			scores[id]++
 		}
 	}
@@ -29,15 +29,15 @@ func rankResults(index map[string][]string, query string) []SearchResult {
 
 	for id, score := range scores {
 		results = append(results, SearchResult{
-			ID: id,
+			ID:    id,
 			Score: score,
 		})
 	}
 
 	// sort here
-	for i:=0; i<len(results); i++{
-		for j:=i+1; j<len(results); j++{
-			if results[j].Score > results[i].Score{
+	for i := 0; i < len(results); i++ {
+		for j := i + 1; j < len(results); j++ {
+			if results[j].Score > results[i].Score {
 				results[i], results[j] = results[j], results[i]
 			}
 		}
@@ -45,14 +45,14 @@ func rankResults(index map[string][]string, query string) []SearchResult {
 	return results
 }
 
-func union (a []string, b []string) [] string {
-	result := [] string{} 
+func union(a []string, b []string) []string {
+	result := []string{}
 
-	for _, idA := range a{
+	for _, idA := range a {
 		result = append(result, idA)
 	}
 
-	for _, idB := range b{
+	for _, idB := range b {
 		found := false
 
 		for _, existingId := range result {
@@ -68,11 +68,11 @@ func union (a []string, b []string) [] string {
 	return result
 }
 
-func intersect(a []string, b []string) [] string{
+func intersect(a []string, b []string) []string {
 	result := []string{}
 
-	for _, idA := range a{
-		for _, idB := range b{
+	for _, idA := range a {
+		for _, idB := range b {
 			if idA == idB {
 				result = append(result, idA)
 			}
@@ -82,7 +82,7 @@ func intersect(a []string, b []string) [] string{
 	return result
 }
 
-func searchOR(index map[string][]string, query string) [] string{
+func searchOR(index map[string][]string, query string) []string {
 	words := strings.Fields(query)
 
 	if len(words) == 0 {
@@ -91,13 +91,13 @@ func searchOR(index map[string][]string, query string) [] string{
 
 	result := index[words[0]]
 
-	for _, word := range words[1:]{
+	for _, word := range words[1:] {
 		result = union(result, index[word])
 	}
 	return result
 }
 
-func searchAND(index map[string][]string, query string) [] string{
+func searchAND(index map[string][]string, query string) []string {
 	words := strings.Fields(query)
 
 	if len(words) == 0 {
@@ -106,9 +106,8 @@ func searchAND(index map[string][]string, query string) [] string{
 
 	result := index[words[0]]
 
-	for _, word := range words[1:]{
+	for _, word := range words[1:] {
 		result = intersect(result, index[word])
 	}
 	return result
 }
-
