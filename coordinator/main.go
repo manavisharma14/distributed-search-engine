@@ -26,22 +26,29 @@ func searchAllShards(query string) []SearchResult{
 
 			if err != nil{
 				fmt.Println(err)
+				resultChannel <- []SearchResult{}
 				return
 			}
 
+			defer resp.Body.Close()
+
 			var results []SearchResult
-			json.NewDecoder(resp.Body).Decode(&results)
+			if err := json.NewDecoder(resp.Body).Decode(&results); err != nil{
+				fmt.Println(err)
+				resultChannel <- []SearchResult{}
+				return
+			}
 			
 			resultChannel <- results
 		}(shard)	
 	}
 
 	allResults := []SearchResult{}
-		
-		for range shards {
-			shardResults := <- resultChannel
-			allResults = append(allResults, shardResults...)
-		}
+			
+	for range shards {
+	shardResults := <- resultChannel
+	allResults = append(allResults, shardResults...)
+	}
 	return allResults
 }
 
