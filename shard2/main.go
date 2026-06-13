@@ -3,7 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -20,7 +22,7 @@ type Document struct {
 
 var documents []Document
 
-var index map[string][]string
+var index map[string]map[string]int
 
 func generateDocuments(startID, n int) {
 	keywords := []string{
@@ -49,13 +51,16 @@ func generateDocuments(startID, n int) {
 }
 
 func buildIndex() {
-	index = make(map[string][]string)
+	index = make(map[string]map[string]int)
 
 	for _, doc := range documents {
 		words := strings.Fields(doc.Text)
 
 		for _, word := range words {
-			index[word] = append(index[word], doc.ID)
+			if index[word] == nil {
+				index[word] = make(map[string]int)
+			}
+			index[word][doc.ID]++
 		}
 	}
 }
@@ -64,6 +69,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	scores := make(map[string]float64)
 	query := r.URL.Query().Get("q")
 	words := strings.Fields(query)
+	matchedTerms := make(map[string]int)
 
 	// for _, word := range words {
 	// 	ids := index[word]
@@ -73,14 +79,20 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	// }
 
 	for _, word := range words {
-		ids := index[word]
+		docsContainingWord := index[word]
 
-		if len(ids) == 0 {
+		if len(docsContainingWord) == 0 {
 			continue
 		}
-		weight := float64(len(documents)) / float64(len(ids))
-		for _, id := range ids {
-			scores[id] += weight
+		N := len(documents)
+		df := len(docsContainingWord)
+
+		idf := math.Log(float64(N) / float64(df))
+
+		for docID, count := range docsContainingWord {
+			tf := float64(count)
+			scores[docID] += tf * idf
+			matchedTerms[docID]++
 		}
 	}
 	fmt.Println(scores)
@@ -88,10 +100,24 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	results := []SearchResult{}
 
 	for id, score := range scores {
+
+		if matchedTerms[id] != len(words) {
+			continue
+		}
 		results = append(results, SearchResult{
 			ID:    id,
 			Score: score,
 		})
+	}
+
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].Score > results[j].Score
+	})
+
+	fmt.Printf("returned %d results\n", len(results))
+
+	if len(results) > 0 {
+		fmt.Println("top result:", results[0])
 	}
 
 	json.NewEncoder(w).Encode(results)
