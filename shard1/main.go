@@ -89,7 +89,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	generateDocuments(1, 10000)
+	generateDocuments(1, 50000)
 	buildIndex()
 
 	fmt.Println("documents:", len(documents))

@@ -22,6 +22,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func searchAllShards(query string) []SearchResult {
+	start := time.Now()
 	shards := []string{
 		"http://localhost:5001",
 		"http://localhost:5002",
@@ -70,6 +71,10 @@ func searchAllShards(query string) []SearchResult {
 	if len(allResults) > 20 {
 		allResults = allResults[:20]
 	}
+
+	fmt.Println("results:", len(allResults))
+
+	fmt.Println("search time:", time.Since(start))
 
 	return allResults
 }

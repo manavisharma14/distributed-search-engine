@@ -86,7 +86,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	generateDocuments(10001, 10000)
+	generateDocuments(10001, 50000)
 	buildIndex()
 	http.HandleFunc("/search", searchHandler)
 	fmt.Println("shard server running on :5002")
