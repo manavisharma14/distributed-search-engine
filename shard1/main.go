@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -87,10 +88,13 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		if len(docsContainingWord) == 0 {
 			continue
 		}
-		weight := float64(len(documents)) / float64(len(docsContainingWord))
+		N := len(documents)
+		df := len(docsContainingWord)
+		idf := math.Log(float64(N) / float64(df))
 
 		for docID, count := range docsContainingWord {
-			scores[docID] += float64(count) * weight
+			tf := float64(count)
+			scores[docID] += tf * idf
 		}
 	}
 
@@ -106,6 +110,10 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(results)
 
 	fmt.Println(scores)
+
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].Score > results[j].Score
+	})
 
 	json.NewEncoder(w).Encode(results)
 }
