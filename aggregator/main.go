@@ -29,3 +29,9 @@ func fetchShard(url string) []SearchResult {
 
 	return results
 }
+
+func main() {
+	http.HandleFunc("/search", searchHandler)
+	fmt.Println("aggregator running on :8080")
+	http.ListenAndServe(":8080", nil)
+}
