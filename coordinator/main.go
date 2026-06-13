@@ -13,7 +13,7 @@ type SearchResult struct {
 	Score int
 }
 
-func searchHandler(w http.ResponseWriter, r *http.Request){
+func searchHandler(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query().Get("q")
 	results := searchAllShards(query)
 
@@ -21,23 +21,24 @@ func searchHandler(w http.ResponseWriter, r *http.Request){
 
 }
 
-func searchAllShards(query string) []SearchResult{
+func searchAllShards(query string) []SearchResult {
 	shards := []string{
 		"http://localhost:5001",
 		"http://localhost:5002",
+		"http://localhost:5003",
 	}
 
 	resultChannel := make(chan []SearchResult)
 
-	for _, shard := range shards{
-		go func(url string){
+	for _, shard := range shards {
+		go func(url string) {
 			searchUrl := url + "/search?q=" + query
 			client := http.Client{
-				Timeout: 2*time.Second,
+				Timeout: 2 * time.Second,
 			}
 			resp, err := client.Get(searchUrl)
 
-			if err != nil{
+			if err != nil {
 				fmt.Println(err)
 				resultChannel <- []SearchResult{}
 				return
@@ -46,33 +47,38 @@ func searchAllShards(query string) []SearchResult{
 			defer resp.Body.Close()
 
 			var results []SearchResult
-			if err := json.NewDecoder(resp.Body).Decode(&results); err != nil{
+			if err := json.NewDecoder(resp.Body).Decode(&results); err != nil {
 				fmt.Println(err)
 				resultChannel <- []SearchResult{}
 				return
 			}
-			
+
 			resultChannel <- results
-		}(shard)	
+		}(shard)
 	}
 
 	allResults := []SearchResult{}
-			
+
 	for range shards {
-		shardResults := <- resultChannel
+		shardResults := <-resultChannel
 		allResults = append(allResults, shardResults...)
 	}
-	sort.Slice(allResults, func(i,j int) bool{
+	sort.Slice(allResults, func(i, j int) bool {
 		return allResults[i].Score > allResults[j].Score
 	})
+
+	if len(allResults) > 20 {
+		allResults = allResults[:20]
+	}
+
 	return allResults
 }
 
-func main(){
-	
+func main() {
+
 	http.HandleFunc("/search", searchHandler)
 	fmt.Println("coordinator running on :8080")
-	if err := http.ListenAndServe(":8080", nil); err != nil{
+	if err := http.ListenAndServe(":8080", nil); err != nil {
 		fmt.Println(err)
 	}
 }
