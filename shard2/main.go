@@ -119,6 +119,14 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("top result:", results[0])
 	}
 
+	const K = 20
+
+	if len(results) > K {
+
+		results = results[:K]
+
+	}
+
 	json.NewEncoder(w).Encode(results)
 }
 
