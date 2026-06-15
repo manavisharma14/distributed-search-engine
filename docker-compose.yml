@@ -1,0 +1,24 @@
+services:
+  shard1:
+    image: shard1
+    ports:
+      - "5001:5001"
+  
+  shard2:
+    image: shard2
+    ports:
+      - "5002:5002"
+
+  shard3:
+    image: shard3
+    ports:
+      - "5003:5003"
+    
+  aggregator:
+    image: aggregator
+    ports:
+      - "8080:8080"
+    depends_on:
+      - shard1
+      - shard2
+      - shard3

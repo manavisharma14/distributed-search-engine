@@ -88,7 +88,6 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 			matchedTerms[docID]++
 		}
 	}
-	fmt.Println(scores)
 
 	results := []SearchResult{}
 

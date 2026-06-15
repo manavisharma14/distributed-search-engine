@@ -21,19 +21,19 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 
 	go func() {
 		resultsChan <- fetchShard(
-			"http://localhost:5001/search?q=" + query,
+			"http://shard1:5001/search?q=" + query,
 		)
 	}()
 
 	go func() {
 		resultsChan <- fetchShard(
-			"http://localhost:5002/search?q=" + query,
+			"http://shard2:5002/search?q=" + query,
 		)
 	}()
 
 	go func() {
 		resultsChan <- fetchShard(
-			"http://localhost:5003/search?q=" + query,
+			"http://shard3:5003/search?q=" + query,
 		)
 	}()
 
