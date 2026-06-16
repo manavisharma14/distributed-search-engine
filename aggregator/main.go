@@ -26,7 +26,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resultsChan := make(chan []SearchResult)
+	resultsChan := make(chan []SearchResult, 3)
 
 	go func() {
 		resultsChan <- fetchShard(
@@ -83,12 +83,20 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("search took:", time.Since(start))
 
-	w.Header().Set("Content-Type", "applicarion/json")
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(results)
 }
 
 func fetchShard(url string) []SearchResult {
+	start := time.Now()
 	resp, err := client.Get(url)
+
+	fmt.Println(
+		"fetch",
+		url,
+		"took",
+		time.Since(start),
+	)
 	if err != nil {
 		fmt.Println("error calling shard:", err)
 		return nil
