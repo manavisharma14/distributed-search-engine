@@ -21,6 +21,11 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 	query := r.URL.Query().Get("q")
 
+	if query == "" {
+		http.Error(w, "missing query", http.StatusBadRequest)
+		return
+	}
+
 	resultsChan := make(chan []SearchResult)
 
 	go func() {
@@ -78,6 +83,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("search took:", time.Since(start))
 
+	w.Header().Set("Content-Type", "applicarion/json")
 	json.NewEncoder(w).Encode(results)
 }
 
