@@ -1,6 +1,7 @@
 package main
 
 import (
+	"container/heap"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -10,18 +11,45 @@ import (
 	"strings"
 )
 
-type SearchResult struct {
-	ID    string
-	Score float64
-}
-
 type Document struct {
 	ID   string
 	Text string
 }
 
-var index map[string]map[string]int
+type SearchResult struct {
+	ID    string
+	Score float64
+}
+
+type MinHeap []SearchResult
+
+func (h MinHeap) Len() int {
+	return len(h)
+}
+
+func (h MinHeap) Less(i, j int) bool {
+	return h[i].Score < h[j].Score
+}
+
+func (h MinHeap) Swap(i, j int) {
+	h[i], h[j] = h[j], h[i]
+}
+
+func (h *MinHeap) Push(x any) {
+	*h = append(*h, x.(SearchResult))
+}
+
+func (h *MinHeap) Pop() any {
+	old := *h
+	n := len(old)
+	item := old[n-1]
+	*h = old[:n-1]
+	return item
+}
+
 var documents []Document
+
+var index map[string]map[string]int
 
 func generateDocuments(startID, n int) {
 	keywords := []string{
@@ -38,11 +66,16 @@ func generateDocuments(startID, n int) {
 	}
 
 	for i := startID; i < startID+n; i++ {
+
 		doc := Document{
+
 			ID: strconv.Itoa(i),
 			Text: keywords[i%len(keywords)] + " " +
 				keywords[(i+1)%len(keywords)] + " " +
 				keywords[(i+2)%len(keywords)],
+		}
+		if i == startID {
+			doc.Text = "grpc grpc grpc grpc distributed"
 		}
 
 		documents = append(documents, doc)
@@ -65,10 +98,15 @@ func buildIndex() {
 }
 
 func searchHandler(w http.ResponseWriter, r *http.Request) {
+	matchedTerms := make(map[string]int)
 	scores := make(map[string]float64)
 	query := r.URL.Query().Get("q")
 	words := strings.Fields(query)
-	matchedTerms := make(map[string]int)
+
+	if len(words) == 0 {
+		http.Error(w, "missing query", http.StatusBadRequest)
+		return
+	}
 
 	for _, word := range words {
 		docsContainingWord := index[word]
@@ -76,10 +114,8 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		if len(docsContainingWord) == 0 {
 			continue
 		}
-
 		N := len(documents)
 		df := len(docsContainingWord)
-
 		idf := math.Log(float64(N) / float64(df))
 
 		for docID, count := range docsContainingWord {
@@ -89,17 +125,33 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	results := []SearchResult{}
+	const K = 20
+
+	h := &MinHeap{}
+	heap.Init(h)
 
 	for id, score := range scores {
 		if matchedTerms[id] != len(words) {
 			continue
 		}
 
-		results = append(results, SearchResult{
+		result := SearchResult{
 			ID:    id,
 			Score: score,
-		})
+		}
+
+		if h.Len() < K {
+			heap.Push(h, result)
+		} else if result.Score > (*h)[0].Score {
+			heap.Pop(h)
+			heap.Push(h, result)
+		}
+	}
+
+	results := []SearchResult{}
+
+	for h.Len() > 0 {
+		results = append(results, heap.Pop(h).(SearchResult))
 	}
 
 	sort.Slice(results, func(i, j int) bool {
@@ -112,14 +164,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("top result:", results[0])
 	}
 
-	const K = 20
-
-	if len(results) > K {
-
-		results = results[:K]
-
-	}
-
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(results)
 }
 

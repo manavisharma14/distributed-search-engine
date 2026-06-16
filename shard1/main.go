@@ -1,6 +1,7 @@
 package main
 
 import (
+	"container/heap"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -18,6 +19,32 @@ type Document struct {
 type SearchResult struct {
 	ID    string
 	Score float64
+}
+
+type MinHeap []SearchResult
+
+func (h MinHeap) Len() int {
+	return len(h)
+}
+
+func (h MinHeap) Less(i, j int) bool {
+	return h[i].Score < h[j].Score
+}
+
+func (h MinHeap) Swap(i, j int) {
+	h[i], h[j] = h[j], h[i]
+}
+
+func (h *MinHeap) Push(x any) {
+	*h = append(*h, x.(SearchResult))
+}
+
+func (h *MinHeap) Pop() any {
+	old := *h
+	n := len(old)
+	item := old[n-1]
+	*h = old[:n-1]
+	return item
 }
 
 var documents []Document
@@ -76,6 +103,11 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query().Get("q")
 	words := strings.Fields(query)
 
+	if len(words) == 0 {
+		http.Error(w, "missing query", http.StatusBadRequest)
+		return
+	}
+
 	for _, word := range words {
 		docsContainingWord := index[word]
 
@@ -93,17 +125,33 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	results := []SearchResult{}
+	const K = 20
+
+	h := &MinHeap{}
+	heap.Init(h)
 
 	for id, score := range scores {
-
 		if matchedTerms[id] != len(words) {
 			continue
 		}
-		results = append(results, SearchResult{
+
+		result := SearchResult{
 			ID:    id,
 			Score: score,
-		})
+		}
+
+		if h.Len() < K {
+			heap.Push(h, result)
+		} else if result.Score > (*h)[0].Score {
+			heap.Pop(h)
+			heap.Push(h, result)
+		}
+	}
+
+	results := []SearchResult{}
+
+	for h.Len() > 0 {
+		results = append(results, heap.Pop(h).(SearchResult))
 	}
 
 	sort.Slice(results, func(i, j int) bool {
@@ -116,11 +164,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("top result:", results[0])
 	}
 
-	const K = 20
-	if len(results) > K {
-		results = results[:K]
-	}
-
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(results)
 }
 
