@@ -8,6 +8,10 @@ import (
 	"time"
 )
 
+var client = &http.Client{
+	Timeout: 2 * time.Second,
+}
+
 type SearchResult struct {
 	ID    string  `json:"ID"`
 	Score float64 `json:"Score"`
@@ -78,7 +82,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func fetchShard(url string) []SearchResult {
-	resp, err := http.Get(url)
+	resp, err := client.Get(url)
 	if err != nil {
 		fmt.Println("error calling shard:", err)
 		return nil
