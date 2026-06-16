@@ -1,20 +1,24 @@
 services:
   shard1:
+    build: ./shard1
     image: shard1
     ports:
       - "5001:5001"
   
   shard2:
+    build: ./shard2
     image: shard2
     ports:
       - "5002:5002"
 
   shard3:
+    build: ./shard3
     image: shard3
     ports:
       - "5003:5003"
     
   aggregator:
+    build: ./aggregator
     image: aggregator
     ports:
       - "8080:8080"

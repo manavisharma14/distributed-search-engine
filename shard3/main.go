@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Document struct {
@@ -98,6 +99,14 @@ func buildIndex() {
 }
 
 func searchHandler(w http.ResponseWriter, r *http.Request) {
+
+	start := time.Now()
+
+	defer func() {
+
+		fmt.Println("search took:", time.Since(start))
+
+	}()
 	matchedTerms := make(map[string]int)
 	scores := make(map[string]float64)
 	query := r.URL.Query().Get("q")
