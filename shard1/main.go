@@ -170,9 +170,8 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	generateDocuments(1, 50000)
-	fmt.Println(documents[0])
+
 	buildIndex()
-	fmt.Println("grpc count in doc1:", index["grpc"]["1"])
 
 	fmt.Println("documents:", len(documents))
 
