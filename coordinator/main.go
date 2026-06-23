@@ -27,6 +27,7 @@ func searchAllShards(query string) []SearchResult {
 		"http://localhost:5001",
 		"http://localhost:5002",
 		"http://localhost:5003",
+		"http://localhost:5004",
 	}
 
 	resultChannel := make(chan []SearchResult)

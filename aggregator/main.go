@@ -25,6 +25,14 @@ type SearchResult struct {
 
 func searchHandler(w http.ResponseWriter, r *http.Request) {
 
+	start := time.Now()
+
+	defer func() {
+
+		fmt.Println("global search took:", time.Since(start))
+
+	}()
+
 	query := r.URL.Query().Get("q")
 
 	if query == "" {
@@ -32,7 +40,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resultsChan := make(chan []SearchResult, 3)
+	resultsChan := make(chan []SearchResult, 4)
 
 	go func() {
 		resultsChan <- fetchShard(
@@ -52,15 +60,23 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		)
 	}()
 
+	go func() {
+		resultsChan <- fetchShard(
+			"http://shard4:5004/search?q=" + query,
+		)
+	}()
+
 	shard1 := <-resultsChan
 	shard2 := <-resultsChan
 	shard3 := <-resultsChan
+	shard4 := <-resultsChan
 
 	results := []SearchResult{}
 
 	results = append(results, shard1...)
 	results = append(results, shard2...)
 	results = append(results, shard3...)
+	results = append(results, shard4...)
 
 	sort.Slice(results, func(i, j int) bool {
 		return results[i].Score > results[j].Score

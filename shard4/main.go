@@ -110,6 +110,7 @@ func buildIndex() {
 }
 
 func searchHandler(w http.ResponseWriter, r *http.Request) {
+
 	start := time.Now()
 
 	defer func() {
@@ -117,7 +118,6 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("search took:", time.Since(start))
 
 	}()
-
 	matchedTerms := make(map[string]int)
 	scores := make(map[string]float64)
 	query := r.URL.Query().Get("q")
@@ -190,7 +190,8 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	err := loadPostsXML(
-		"/Users/manavisharma/Downloads/networkengineering.stackexchange.com/Posts.xml",
+
+		"/Users/manavisharma/Downloads/codereview.stackexchange.com/Posts.xml",
 	)
 
 	if err != nil {
@@ -201,6 +202,6 @@ func main() {
 
 	buildIndex()
 	http.HandleFunc("/search", searchHandler)
-	fmt.Println("shard server running on :5002")
-	http.ListenAndServe(":5002", nil)
+	fmt.Println("shard server running on :5004")
+	http.ListenAndServe(":5004", nil)
 }

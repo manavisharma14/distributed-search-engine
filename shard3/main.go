@@ -3,14 +3,25 @@ package main
 import (
 	"container/heap"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"math"
 	"net/http"
+	"os"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 )
+
+type Posts struct {
+	Rows []Post `xml:"row"`
+}
+
+type Post struct {
+	ID    string `xml:"Id,attr"`
+	Title string `xml:"Title,attr"`
+	Body  string `xml:"Body,attr"`
+}
 
 type Document struct {
 	ID   string
@@ -52,41 +63,37 @@ var documents []Document
 
 var index map[string]map[string]int
 
-func generateDocuments(startID, n int) {
-	templates := []string{
-		"building distributed systems with %s requires careful consideration of %s and %s patterns in production",
-		"how to implement %s in golang using %s for high performance %s at scale",
-		"understanding %s architecture with %s enables better %s for microservices",
-		"production guide to %s lessons learned from running %s with %s in kubernetes",
-		"deep dive into %s internals how %s handles %s under heavy load",
-		"optimizing %s performance using %s caching strategies and %s replication",
-		"getting started with %s and %s for building resilient %s pipelines",
-		"why we migrated from monolith to %s using %s and %s at our startup",
-		"monitoring %s in production with %s dashboards and %s alerting",
-		"scaling %s beyond 100k requests using %s and %s load balancing",
+func loadPostsXML(path string) error {
+
+	file, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	var posts Posts
+
+	decoder := xml.NewDecoder(file)
+
+	err = decoder.Decode(&posts)
+	if err != nil {
+		return err
 	}
 
-	keywords := []string{
-		"grpc", "distributed", "golang", "concurrency",
-		"redis", "cache", "docker", "kubernetes",
-		"microservices", "scaling", "postgresql", "sharding",
-		"replication", "consensus", "raft", "etcd",
-		"prometheus", "grafana", "tracing", "observability",
+	for _, post := range posts.Rows {
+
+		text := strings.ToLower(
+			post.Title + " " + post.Body,
+		)
+
+		documents = append(documents, Document{
+			ID:   post.ID,
+			Text: text,
+		})
 	}
 
-	for i := startID; i < startID+n; i++ {
-		t := templates[i%len(templates)]
-		k1 := keywords[i%len(keywords)]
-		k2 := keywords[(i+3)%len(keywords)]
-		k3 := keywords[(i+7)%len(keywords)]
-		doc := Document{
-			ID:   strconv.Itoa(i),
-			Text: fmt.Sprintf(t, k1, k2, k3),
-		}
-		documents = append(documents, doc)
-	}
+	return nil
 }
-
 func buildIndex() {
 	index = make(map[string]map[string]int)
 
@@ -182,7 +189,16 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	generateDocuments(100001, 50000)
+	err := loadPostsXML(
+		"/Users/manavisharma/Downloads/softwareengineering.stackexchange.com/Posts.xml",
+	)
+
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("documents:", len(documents))
+
 	buildIndex()
 	http.HandleFunc("/search", searchHandler)
 	fmt.Println("shard server running on :5003")
