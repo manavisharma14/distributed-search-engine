@@ -190,8 +190,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	err := loadPostsXML(
-
-		"/Users/manavisharma/Downloads/codereview.stackexchange.com/Posts.xml",
+		"./data/Posts.xml",
 	)
 
 	if err != nil {
